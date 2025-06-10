@@ -51,7 +51,7 @@ impl GetTokenResponse {
         };
 
         let token = match Self::from_response(text) {
-            Some(token) => token
+            Some(token) => token,
             None => return (auth_fields, Err(TokenError::ResponseError))
         };
 
