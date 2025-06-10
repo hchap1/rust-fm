@@ -9,3 +9,4 @@ md5 = "*"
 reqwest = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
+dotenvy = "*"
