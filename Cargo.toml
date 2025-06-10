@@ -1,0 +1,11 @@
+[package]
+name = "rusty_scrobble"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "*", features = ["full"] }
+md5 = "*"
+reqwest = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
