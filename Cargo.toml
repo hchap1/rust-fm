@@ -10,3 +10,6 @@ reqwest = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 dotenvy = "*"
+open = "*"
+axum = "*"
+crossbeam = "*"

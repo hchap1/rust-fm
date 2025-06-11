@@ -1,65 +1,79 @@
-use std::collections::BTreeMap;
-
-use reqwest::ClientBuilder;
+use axum::{extract::Query, response::Html, routing::get, Router};
 use serde::Deserialize;
 
-use crate::auth::AuthFields;
+use crate::auth::WebOAuth;
 
-pub enum TokenError {
-    MissingKey,
-    MissingSecret,
-    NetworkError,
-    ResponseError
+pub const CALLBACK_URL: &str = "http://localhost:8080/callback";
+
+#[derive(Clone, Debug)]
+pub enum WebCallbackError {
+    UnableToBind,
+    ChannelClosed
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct GetTokenResponse {
+pub struct WebCallback {
+    receiver: crossbeam::channel::Receiver<Result<String, WebCallbackError>>,
+    _handle: tokio::task::JoinHandle<()>
+}
+
+impl WebCallback {
+    pub async fn oauth(auth: WebOAuth) -> Result<String, WebCallbackError> {
+        let manager = Self::spawn();
+        let _ = auth.browser_auth().await;
+        manager.callback().await
+    }
+
+    fn spawn() -> Self {
+        let (sender, receiver) = crossbeam::channel::unbounded();
+        let _handle = tokio::spawn(start_server(sender));
+        Self { receiver, _handle }
+    }
+
+    async fn callback(&self) -> Result<String, WebCallbackError> {
+        let recv = self.receiver.clone();
+        let res = tokio::task::spawn_blocking(move || recv.recv()).await;
+
+        match res {
+            Ok(channel_result) => match channel_result {
+                Ok(token) => token,
+                Err(_) => Err(WebCallbackError::ChannelClosed)
+            }
+            Err(_) => Err(WebCallbackError::ChannelClosed)
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct CallbackQuery {
     token: String,
 }
 
-impl GetTokenResponse {
+async fn start_server(token_sender: crossbeam::channel::Sender<Result<String, WebCallbackError>>) {
+    let reporter = token_sender.clone();
+    let app = Router::new().route(
+        "/callback",
+        get(move |Query(params): Query<CallbackQuery>| {
+            async move {
+                if token_sender.send(Ok(params.token.clone())).is_ok() {
+                    Html(format!("
+                        <h1>FUCK YEAH THIS SHIT WORKS</h1>
+                        <p>Here's your token lol: {}</p>
+                        <p>close tab if token ^ alives then it worky</p>
+                    ", params.token))
+                } else {
+                    Html("<h1>it not worky</h1>".to_string())
+                }
+            }
+        }),
+    );
 
-    /// Consume an AuthFields and return a new one, possibly containing a token.
-    /// Result indicates success () or error TokenError.
-    pub async fn get(mut auth_fields: AuthFields) -> (AuthFields, Result<(), TokenError>){
+    let listener = match tokio::net::TcpListener::bind("127.0.0.1:8080").await {
+        Ok(listener) => listener,
+        Err(_) => {
+            let _ = reporter.send(Err(WebCallbackError::UnableToBind));
+            return;
+        }
+    };
 
-        let api_key: &str = match auth_fields.get_key() {
-            Some(key) => key,
-            None => return (auth_fields, Err(TokenError::MissingKey))
-        };
-
-        let mut params: BTreeMap<&str, &str> = BTreeMap::new();
-        params.insert("api_key", api_key);
-        params.insert("method", "auth.gettoken");
-        params.insert("format", "json");
-
-        let client = match ClientBuilder::new().build() {
-            Ok(client) => client,
-            Err(_) => return (auth_fields, Err(TokenError::NetworkError))
-        };
-
-        let result = client.post(crate::api::URL)
-            .form(&params)
-            .send().await;
-
-        let text = match result {
-            Ok(json_string) => match json_string.text().await {
-                Ok(text) => text,
-                Err(_) => return (auth_fields, Err(TokenError::ResponseError))
-            },
-            Err(_) => return (auth_fields, Err(TokenError::ResponseError))
-        };
-
-        let token = match Self::from_response(text) {
-            Some(token) => token,
-            None => return (auth_fields, Err(TokenError::ResponseError))
-        };
-
-        auth_fields.set_token(token);
-        (auth_fields, Ok(()))
-    }
-
-    fn from_response(response: String) -> Option<Self> {
-        serde_json::from_str::<Self>(&response).ok()
-    }
+    axum::serve(listener, app).await.unwrap();
 }

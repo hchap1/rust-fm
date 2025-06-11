@@ -1,4 +1,6 @@
-use auth::AuthFields;
+use auth::WebOAuth;
+use token::WebCallback;
+
 use dotenvy::dotenv;
 
 mod token;
@@ -9,7 +11,7 @@ mod api;
 async fn main() {
     dotenv().ok();
 
-    let auth = AuthFields::load_env();
-    let (auth, _) = crate::token::GetTokenResponse::get(auth).await;
-    println!("TOKEN: {:?}", auth.get_token());
+    let auth = WebOAuth::load_env();
+    let token = WebCallback::oauth(auth).await;
+    println!("{token:?}");
 }
