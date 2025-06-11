@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, env::var};
 
+#[derive(Clone)]
 pub struct WebOAuth {
     api_key: Option<String>,
     api_secret: Option<String>,
@@ -8,6 +9,10 @@ pub struct WebOAuth {
 }
 
 impl WebOAuth {
+    pub fn ready(&self) -> bool {
+        self.session.is_some()
+    }
+
     pub fn load_env() -> Self {
         Self {
             api_key: var("FM_KEY").ok(),
@@ -40,6 +45,7 @@ impl WebOAuth {
     pub fn get_key(&self) -> Option<&str> { return self.api_key.as_ref().map(|x| x.as_str()) }
     pub fn get_secret(&self) -> Option<&str> { return self.api_secret.as_ref().map(|x| x.as_str()) }
     pub fn get_token(&self) -> Option<&str> { return self.auth_token.as_ref().map(|x| x.as_str()) }
+    pub fn get_session(&self) -> Option<&str> { return self.session.as_ref().map(|x| x.as_str()) }
 
     pub fn set_token(&mut self, token: String) { self.auth_token = Some(token); }
     pub fn set_session(&mut self, session: String) { self.session = Some(session); }

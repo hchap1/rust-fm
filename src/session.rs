@@ -1,5 +1,5 @@
 use reqwest::ClientBuilder;
-use reqwest::RequestBuilder;
+use serde::Deserialize;
 
 use crate::auth::WebOAuth;
 use crate::auth::Signature;
@@ -9,13 +9,14 @@ pub enum WebSessionError {
     MissingFields,
     ClientFailed,
     ResponseError,
-    TextError
+    TextError,
+    ParseError
 }
 
 pub struct WebSession;
 
 impl WebSession {
-    pub async fn get(auth: WebOAuth) -> (WebOAuth, Result<(), WebSessionError>) {
+    pub async fn get(mut auth: WebOAuth) -> (WebOAuth, Result<(), WebSessionError>) {
         let (key, token, secret) = match (auth.get_key(), auth.get_token(), auth.get_secret()) {
             (Some(key), Some(token), Some(secret)) => (key, token, secret),
             _ => return (auth, Err(WebSessionError::MissingFields))
@@ -50,7 +51,22 @@ impl WebSession {
             Err(_) => return (auth, Err(WebSessionError::TextError))
         };
 
-        println!("{text}");
+        let parsed: SessionResponse = match serde_json::from_str(text.as_str()) {
+            Ok(session_response) => session_response,
+            Err(_) => return (auth, Err(WebSessionError::ParseError))
+        };
+
+        auth.set_session(parsed.session.key);
         (auth, Ok(()))
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct SessionResponse {
+    session: Session,
+}
+
+#[derive(Debug, Deserialize)]
+struct Session {
+    key: String,
 }

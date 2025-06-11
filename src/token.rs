@@ -18,6 +18,7 @@ pub struct WebCallback {
 
 impl WebCallback {
     pub async fn oauth(mut auth: WebOAuth) -> (WebOAuth, Result<(), WebCallbackError>) {
+
         let manager = Self::spawn();
         let _ = auth.browser_auth().await;
         
