@@ -3,7 +3,8 @@ use std::{collections::BTreeMap, env::var};
 pub struct WebOAuth {
     api_key: Option<String>,
     api_secret: Option<String>,
-    auth_token: Option<String>
+    auth_token: Option<String>,
+    session: Option<String>
 }
 
 impl WebOAuth {
@@ -11,7 +12,8 @@ impl WebOAuth {
         Self {
             api_key: var("FM_KEY").ok(),
             api_secret: var("FM_SECRET").ok(),
-            auth_token: var("FM_TOKEN").ok()
+            auth_token: None,
+            session: var("FM_SESSION").ok()
         }
     }
 
@@ -38,6 +40,9 @@ impl WebOAuth {
     pub fn get_key(&self) -> Option<&str> { return self.api_key.as_ref().map(|x| x.as_str()) }
     pub fn get_secret(&self) -> Option<&str> { return self.api_secret.as_ref().map(|x| x.as_str()) }
     pub fn get_token(&self) -> Option<&str> { return self.auth_token.as_ref().map(|x| x.as_str()) }
+
+    pub fn set_token(&mut self, token: String) { self.auth_token = Some(token); }
+    pub fn set_session(&mut self, session: String) { self.session = Some(session); }
 }
 
 pub struct Signature;
@@ -61,10 +66,14 @@ impl Signature {
         api_sig.push_str(secret);
 
         buffer.clear();
-        buffer.push_str(format!("{:x}", md5::compute(api_sig)).as_str());
+        buffer.push_str(Self::md5_hash(api_sig.as_str()).as_str());
 
         map.insert("api_sig", buffer.as_str());
         map.insert("format", "json");
         map
+    }
+
+    pub fn md5_hash(value: &str) -> String {
+        format!("{:x}", md5::compute(value))
     }
 }
