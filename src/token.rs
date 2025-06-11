@@ -56,12 +56,12 @@ async fn start_server(token_sender: crossbeam::channel::Sender<Result<String, We
             async move {
                 if token_sender.send(Ok(params.token.clone())).is_ok() {
                     Html(format!("
-                        <h1>FUCK YEAH THIS SHIT WORKS</h1>
-                        <p>Here's your token lol: {}</p>
-                        <p>close tab if token ^ alives then it worky</p>
+                        <h1>AUTHENTICATION SUCCESSFUL!</h1>
+                        <p>Token: {}</p>
+                        <p>Close this tab.</p>
                     ", params.token))
                 } else {
-                    Html("<h1>it not worky</h1>".to_string())
+                    Html("<h1>AUTHENTICATION FAILED.</h1>".to_string())
                 }
             }
         }),
