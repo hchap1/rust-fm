@@ -1,6 +1,6 @@
 [package]
 name = "rust_fm"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Harrison Chapman [hchap1@hotmail.com]"]
 edition = "2024"
 description = "last.fm OAUTH and scrobbling"
