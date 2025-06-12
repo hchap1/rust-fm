@@ -13,9 +13,11 @@ pub enum WebSessionError {
     ParseError
 }
 
+/// Struct to grab the permanent session token from a one-use authentication token.
 pub struct WebSession;
 
 impl WebSession {
+    /// This function attempts to load the session token into the auth. Requires a valid key, token and secret.
     pub async fn get(mut auth: WebOAuth) -> (WebOAuth, Result<(), WebSessionError>) {
         let (key, token, secret) = match (auth.get_key(), auth.get_token(), auth.get_secret()) {
             (Some(key), Some(token), Some(secret)) => (key, token, secret),

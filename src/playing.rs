@@ -6,6 +6,7 @@ use crate::auth::WebOAuth;
 use crate::auth::Signature;
 
 #[derive(Clone, Debug)]
+/// A scrobble object.
 pub struct Scrobble {
     title: String,
     artist: String,
@@ -28,6 +29,8 @@ pub enum ScrobbleError {
 
 pub struct NowPlaying;
 impl NowPlaying {
+    /// Set the 'now playing' status. This does not have any rules.
+    /// Requires the auth to contain a valid key, session and token.
     pub async fn set_now_playing(auth: WebOAuth, scrobble: Scrobble) -> Result<(), ScrobbleError> {
         let (key, session, secret) = match (auth.get_key(), auth.get_session(), auth.get_secret()) {
             (Some(key), Some(token), Some(secret)) => (key, token, secret),
@@ -74,6 +77,8 @@ impl NowPlaying {
         Ok(())
     }
 
+    /// Push an actual scrobble. Refer to last.fm's API documentation to see the rules here.
+    /// This function does not abide by any rules, and will generate a timestamp if none is provided.
     pub async fn push_scrobble(
         auth: WebOAuth, scrobble: Scrobble, start_time: Option<DateTime<Utc>>
     ) -> Result<(), ScrobbleError> {

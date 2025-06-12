@@ -11,12 +11,14 @@ pub enum WebCallbackError {
     ChannelClosed
 }
 
+/// Struct to handle the callback system for authentication.
 pub struct WebCallback {
     receiver: crossbeam::channel::Receiver<Result<String, WebCallbackError>>,
     _handle: tokio::task::JoinHandle<()>
 }
 
 impl WebCallback {
+    /// This function will spawn the browser and manager to listen for a redirect authentication.
     pub async fn oauth(mut auth: WebOAuth) -> (WebOAuth, Result<(), WebCallbackError>) {
 
         let manager = Self::spawn();

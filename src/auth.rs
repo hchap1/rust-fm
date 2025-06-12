@@ -9,10 +9,12 @@ pub struct WebOAuth {
 }
 
 impl WebOAuth {
+    /// Does the session exist? No guarantee of validity.
     pub fn ready(&self) -> bool {
         self.session.is_some()
     }
 
+    /// Attempt to load key, secret and session from environment variables.
     pub fn load_env() -> Self {
         Self {
             api_key: var("FM_KEY").ok(),
@@ -22,6 +24,22 @@ impl WebOAuth {
         }
     }
 
+    /// Create an authentication object from Option<String> for each field.
+    /// It is expected that api_key and api_sec are provided.
+    pub fn from_key_and_secret(
+        api_key: Option<String>,
+        api_sec: Option<String>,
+        session: Option<String>
+    ) -> Self {
+        Self {
+            api_key,
+            api_secret: api_sec,
+            auth_token: None,
+            session
+        }
+    }
+
+    /// Spawn a browser prompting authentication, requires valid api key.
     pub async fn browser_auth(&self) {
         let key = match self.get_key() {
             Some(key) => key,
@@ -54,6 +72,7 @@ impl WebOAuth {
 pub struct Signature;
 
 impl Signature {
+    /// Construct a BTreeMap for command arguments, including api signature.
     pub fn from_args<'a>(
         args: Vec<(&'static str, &'a str)>, buffer: &'a mut String, secret: &'a str
     ) -> BTreeMap<&'a str, &'a str> {
