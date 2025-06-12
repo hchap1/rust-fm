@@ -7,7 +7,7 @@ description = "last.fm OAUTH and scrobbling"
 license = "MIT"
 repository = "https://github.com/hchap1/rust-fm"
 readme = "README.md"
-keywords = ["last.fm", "music", "scrobble"]
+keywords = ["fm", "music", "scrobble"]
 
 [lib]
 name = "rust_fm"
