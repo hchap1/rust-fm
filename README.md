@@ -10,7 +10,7 @@
   - Push a scrobble, relies on you to implement the LAST.FM rules
   - Generate timestamp if one is not provided
  
-#Full example:
+# Full example:
 ```rust
 use rust_fm::auth::WebOAuth;
 use rust_fm::token::WebCallback;
