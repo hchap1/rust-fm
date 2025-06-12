@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, env::var};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WebOAuth {
     api_key: Option<String>,
     api_secret: Option<String>,
